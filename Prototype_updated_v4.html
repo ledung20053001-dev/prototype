@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Callbot — Prototype theo Contract</title>
+  <style>
+    :root {
+      --bg: #EEF2EC;
+      --ink: #1B2A20;
+      --ink-soft: #526158;
+      --accent: #2F6F4E;
+      --accent-soft: #DCE8DD;
+      --warm: #B95034;
+      --warm-soft: #F4DDD6;
+      --card: #fff;
+      --line: #CBD6C7;
+      --blue: #2D5F86;
+      --blue-soft: #DCEAF5;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, Arial, sans-serif;
+      padding: 24px 14px 50px
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: auto
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 24px
+    }
+
+    .scenarios {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 7px;
+      margin: 12px 0 14px
+    }
+
+    .scenarios button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      padding: 10px 7px;
+      border-radius: 8px;
+      font-size: 11px;
+      cursor: pointer
+    }
+
+    .scenarios button.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent)
+    }
+
+    .console {
+      display: grid;
+      grid-template-columns: 1.4fr .9fr;
+      gap: 14px
+    }
+
+    .panel {
+      border-radius: 8px;
+      overflow: hidden
+    }
+
+    .call-panel {
+      background: var(--ink);
+      min-height: 610px;
+      display: flex;
+      flex-direction: column;
+      position: relative
+    }
+
+    .floating-status {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(14, 22, 38, .95);
+      color: #D9E3F3;
+      font-size: 12px;
+      line-height: 1.2;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, .28);
+      display: none;
+      z-index: 3;
+      white-space: nowrap
+    }
+
+    .floating-status.active {
+      display: block
+    }
+
+    .call-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, .12);
+      display: flex;
+      gap: 11px;
+      align-items: center
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700
+    }
+
+    .call-meta {
+      flex: 1
+    }
+
+    .call-meta .name {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600
+    }
+
+    .call-meta .status {
+      color: #A5B7AA;
+      font-size: 12px;
+      margin-top: 3px
+    }
+
+    .timer {
+      color: #D2DED4;
+      font-size: 13px
+    }
+
+    .transcript {
+      flex: 1;
+      overflow: auto;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 430px;
+      max-height: 535px
+    }
+
+    .bubble {
+      max-width: 84%;
+      padding: 10px 13px;
+      border-radius: 11px;
+      font-size: 14px;
+      line-height: 1.5
+    }
+
+    .bot {
+      align-self: flex-start;
+      background: #2B3B30;
+      color: #F0F4EF;
+      border-bottom-left-radius: 3px
+    }
+
+    .patient {
+      align-self: flex-end;
+      background: var(--accent-soft);
+      color: #122016;
+      border-bottom-right-radius: 3px
+    }
+
+    .system {
+      align-self: center;
+      background: transparent;
+      color: #9EB0A2;
+      font-size: 11px;
+      text-align: center
+    }
+
+    .error {
+      align-self: flex-start;
+      background: var(--warm-soft);
+      color: #5B2515
+    }
+
+    .quick {
+      padding: 0 14px 12px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap
+    }
+
+    .quick button {
+      background: transparent;
+      color: #BDD0C1;
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 10px;
+      cursor: pointer
+    }
+
+    .composer {
+      padding: 12px 14px;
+      border-top: 1px solid rgba(255, 255, 255, .12);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px
+    }
+
+    .composer input {
+      border: 1px solid rgba(255, 255, 255, .18);
+      background: rgba(255, 255, 255, .06);
+      color: #fff;
+      border-radius: 7px;
+      padding: 10px;
+      font-size: 13px
+    }
+
+    .composer button,
+    .startbtn {
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 7px;
+      cursor: pointer
+    }
+
+    .startbtn {
+      grid-column: 1/-1
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 12px
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 15px
+    }
+
+    .card h2 {
+      font-size: 15px;
+      margin: 0 0 11px
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 125px 1fr;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px dashed #D7DFD4;
+      font-size: 12px
+    }
+
+    .row:last-child {
+      border-bottom: none
+    }
+
+    .label {
+      color: var(--ink-soft)
+    }
+
+    .value {
+      font-weight: 600;
+      word-break: break-word
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--blue-soft);
+      color: #244D6A
+    }
+
+    .api-log {
+      background: #F2F3EE;
+      border-radius: 6px;
+      padding: 10px;
+      min-height: 140px;
+      max-height: 220px;
+      overflow: auto;
+      font-family: Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.55;
+      white-space: pre-wrap
+    }
+
+    .outcome {
+      font-size: 16px;
+      font-weight: 800;
+      padding: 10px;
+      border-radius: 7px;
+      background: #EDF1EC;
+      text-align: center;
+      margin-top: 10px
+    }
+
+    .edge {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--line);
+      font-size: 11px
+    }
+
+    .edge label {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      cursor: pointer
+    }
+
+    @media(max-width:900px) {
+      .console {
+        grid-template-columns: 1fr
+      }
+
+      .scenarios {
+        grid-template-columns: repeat(2, 1fr)
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Vinmec AI Callbot — Prototype</h1>
+    <p style="margin:4px 0 14px;color:#526158;font-size:13px;">
+      Bản prototype mô tả luồng hội thoại và logic nghiệp vụ để đội AI phát triển, kiểm thử và triển khai hệ thống
+      Callbot theo Product Contract.
+    </p>
+
+    <div class="scenarios" id="scenarioButtons"></div>
+
+    <div class="console">
+      <div class="panel call-panel">
+        <div class="call-header">
+          <div class="avatar">CB</div>
+          <div class="call-meta">
+            <div class="name">AI Callbot</div>
+            <div class="status" id="callStatus">Chưa bắt đầu</div>
+          </div>
+          <div class="timer" id="timer">00:00</div>
+        </div>
+
+        <div class="floating-status" id="floatingStatus"></div>
+
+        <div class="transcript" id="transcript">
+          <div class="bubble system">Chọn luồng và nhấn “Bắt đầu”.</div>
+        </div>
+
+        <div class="quick" id="quick"></div>
+
+        <div class="composer">
+          <button class="startbtn" id="startBtn">Bắt đầu</button>
+          <input id="input" placeholder="Nhập lời bệnh nhân nói..." style="display:none">
+          <button id="sendBtn" style="display:none">Gửi</button>
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="card">
+          <h2>Trạng thái</h2>
+          <div class="row"><span class="label">Luồng</span><span class="value" id="scenarioName">—</span></div>
+          <div class="row"><span class="label">Hướng gọi</span><span class="value" id="direction">—</span></div>
+          <div class="row"><span class="label">State</span><span class="value"><span class="badge"
+                id="state">—</span></span></div>
+          <div class="row"><span class="label">Xác minh</span><span class="value" id="identity">NOT_VERIFIED</span>
+          </div>
+          <div class="row"><span class="label">appointment_id</span><span class="value"
+              id="appointmentId">apt_00417</span></div>
+          <div class="row"><span class="label">Trạng thái lịch</span><span class="value"
+              id="apptStatus">SCHEDULED</span></div>
+          <div class="row"><span class="label">attempt_count</span><span class="value" id="attempt">0</span></div>
+          <div class="outcome" id="outcome">—</div>
+
+          <div class="edge" id="bookEdge">
+            <label><input type="checkbox" id="patientNotFound"> Test PATIENT_NOT_FOUND</label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2><button id="apiToggle"
+              style="all:unset;cursor:pointer;font:inherit;font-weight:600;width:100%;display:flex;justify-content:space-between;align-items:center;">API
+              action <span id="apiChevron">▸</span></button></h2>
+          <div class="api-log" id="apiLog" style="display:none">Chưa có action.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const patient = { full_name: 'Nguyễn Văn An', dob: '1978-03-14', phone: '0901234567' };
+    const appointment = {
+      id: 'apt_00417', status: 'SCHEDULED', clinic: 'Vinmec',
+      dateText: 'ngày 14 tháng 10', timeText: '9 giờ sáng',
+      starts_at: '2026-10-14T09:00:00+07:00', attempt_count: 0, version: 3
+    };
+    const slots = [
+      { id: 'slot_91d2', label: 'ngày 30 tháng 9 lúc 9 giờ sáng', date: '30/09/2026', hour: 9, doctor: 'BS. Nguyễn Minh', specialty: 'Nội tổng quát', session: 'sáng' },
+      { id: 'slot_a201', label: 'ngày 30 tháng 9 lúc 2 giờ chiều', date: '30/09/2026', hour: 14, doctor: 'BS. Nguyễn Minh', specialty: 'Nội tổng quát', session: 'chiều' },
+      { id: 'slot_b702', label: 'ngày 1 tháng 10 lúc 10 giờ sáng', date: '01/10/2026', hour: 10, doctor: 'BS. Trần An', specialty: 'Nội tổng quát', session: 'sáng' }
+    ];
+
+    const scenarios = [
+      { id: 'identity', name: 'Xác minh danh tính', dir: 'outbound' },
+      { id: 'confirm', name: 'Xác nhận', dir: 'outbound' },
+      { id: 'cancel', name: 'Hủy', dir: 'outbound' },
+      { id: 'transfer', name: 'Chuyển NV', dir: 'outbound' },
+      { id: 'reschedule', name: 'Đổi lịch', dir: 'outbound' },
+      { id: 'unreachable', name: 'Không liên lạc', dir: 'outbound' },
+      { id: 'book', name: 'Đặt lịch', dir: 'inbound' }
+    ];
+
+    let selected = scenarios[1], stage = 'ID_NAME', callActive = false, seconds = 0, timerInt = null;
+    let verified = false, misunderstand = 0, silence = 0, pendingSlot = null, cancelReason = null;
+    let capturedName = '', capturedDob = '', identityRetry = false, identityDobMisses = 0;
+    let bookingNeed = { specialty: '', date: '', session: '', hour: null }, pendingIntent = null;
+
+    const $ = id => document.getElementById(id);
+    function add(text, cls = 'bot') {
+      const d = document.createElement('div'); d.className = 'bubble ' + cls; d.textContent = text;
+      $('transcript').appendChild(d); $('transcript').scrollTop = $('transcript').scrollHeight;
+    }
+    function api(text) {
+      const el = $('apiLog'); if (el.textContent === 'Chưa có action.') el.textContent = '';
+      const stamp = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+      el.textContent += (el.textContent ? '\n' : '') + '[' + stamp + '] ' + text; el.scrollTop = el.scrollHeight;
+    }
+    function setState(v) { $('state').textContent = v }
+    function setOutcome(o, status) { $('outcome').textContent = o; $('apptStatus').textContent = status || appointment.status }
+    function showFloatingStatus(text = '') { const el = $('floatingStatus'); if (text) { el.textContent = text; el.classList.add('active') } else { el.textContent = ''; el.classList.remove('active') } }
+    function statusBannerText(outcome, status) {
+      const finalStatus = status || outcome || '';
+      const map = {
+        'TRANSFERRED': 'Cuộc gọi đã kết thúc: chuyển nhân viên',
+        'CONFIRMED': 'Cuộc gọi đã kết thúc: xác nhận lịch',
+        'CANCELLED': 'Cuộc gọi đã kết thúc: hủy lịch',
+        'RESCHEDULED': 'Cuộc gọi đã kết thúc: đổi lịch',
+        'BOOKED': 'Cuộc gọi đã kết thúc: đặt lịch',
+        'UNREACHABLE': 'Cuộc gọi đã kết thúc: không liên lạc được',
+        'SCHEDULED': 'Cuộc gọi đã kết thúc: giữ nguyên lịch'
+      };
+      return map[finalStatus] || '';
+    }
+    function setQuick(items) {
+      $('quick').innerHTML = '';
+      items.forEach(([label, val]) => {
+        const b = document.createElement('button'); b.textContent = label; b.onclick = () => handle(val); $('quick').appendChild(b)
+      })
+    }
+    function end(outcome, status, action) {
+      if (action) api(action);
+      appointment.status = status || appointment.status;
+      setOutcome(outcome, status);
+      setState('ENDED');
+      const banner = statusBannerText(outcome, status);
+      $('callStatus').textContent = banner || 'Đã kết thúc';
+      showFloatingStatus(banner);
+      callActive = false; clearInterval(timerInt);
+      $('input').style.display = 'none'; $('sendBtn').style.display = 'none';
+      $('startBtn').style.display = 'block'; $('startBtn').textContent = 'Chạy lại';
+      setQuick([]);
+    }
+    function normalize(s) {
+      return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[.,!?;:()]/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    function has(s, words) { const n = normalize(s); return words.some(w => n.includes(normalize(w))) }
+    function tick() { seconds++; $('timer').textContent = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0') }
+
+    // Lấy phần người gọi sửa lại sau các cụm như “à nhầm…”, “ý tôi là…”.
+    function effectiveUtterance(raw) {
+      let s = normalize(raw);
+      const markers = ['a nham', 'nham', 'y toi la', 'sua lai', 'xin loi', 'a khong phai', 'khong phai'];
+      let best = -1, len = 0;
+      markers.forEach(m => { const i = s.lastIndexOf(m); if (i > best) { best = i; len = m.length } });
+      if (best >= 0) {
+        const tail = s.slice(best + len).replace(/^\s*(la\s+)?/, '').trim();
+        if (tail) return tail;
+      }
+      return s;
+    }
+
+    function cleanName(raw) {
+      let s = effectiveUtterance(raw);
+      // Chỉ loại tiếng đệm ở đầu/cuối, không xóa token nằm giữa tên.
+      const fillers = ['toi la', 'em la', 'minh la', 'da', 'vang', 'uh', 'u', 'o', 'ờ', 'ơ', 'a', 'ạ', 'nhe', 'nha', 'nhá', 'nhé', 'nhá', 'nhé'];
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const f of fillers) {
+          const nf = normalize(f);
+          if (s === nf) { s = ''; changed = true; break }
+          if (s.startsWith(nf + ' ')) { s = s.slice(nf.length).trim(); changed = true; break }
+          if (s.endsWith(' ' + nf)) { s = s.slice(0, -nf.length).trim(); changed = true; break }
+        }
+      }
+      // Bỏ phần intent nếu nói liền sau tên.
+      s = s.replace(/\s+(toi )?(muon|can)\s+(dat|huy|doi).*$/, '').trim();
+      return s;
+    }
+    function nameMatches(raw) {
+      const eff = effectiveUtterance(raw), target = normalize(patient.full_name);
+      if (eff.includes('khong phai ' + target)) return false;
+      if (eff === target || eff.startsWith(target + ' ') || eff.endsWith(' ' + target) || eff.includes(' ' + target + ' ')) return true;
+      return cleanName(raw) === target;
+    }
+
+    function extractDob(raw) {
+      const s = effectiveUtterance(raw);
+      const out = { day: null, month: null, year: null, hasAny: false, complete: false };
+      let m;
+      // dd/mm/yyyy, dd-mm-yyyy hoặc dd/mm/yy
+      m = s.match(/\b(\d{1,2})\s*[\/-]\s*(\d{1,4})(?:\s*[\/-]\s*(\d{2,4}))?\b/);
+      if (m) {
+        const dd = +m[1], mm = +m[2];
+        if (dd >= 1 && dd <= 31 && mm >= 1 && mm <= 12) { out.day = dd; out.month = mm; out.year = m[3] ? +m[3] : null; out.hasAny = true }
+      }
+      if (!out.day) { m = s.match(/ngay\s+(\d{1,2})(?:\s+thang\s+(\d{1,2}))?(?:\s+nam\s+(\d{2,4}))?/); if (m) { out.day = +m[1]; out.month = m[2] ? +m[2] : null; out.year = m[3] ? +m[3] : null; out.hasAny = true } }
+      if (!out.month) { m = s.match(/thang\s+(\d{1,2})/); if (m) { out.month = +m[1]; out.hasAny = true } }
+      // Ưu tiên năm 4 chữ số; chỉ coi 2 chữ số là năm khi có từ “năm” hoặc người dùng chỉ đọc riêng năm.
+      const years4 = [...s.matchAll(/\b(19\d{2}|20\d{2})\b/g)].map(x => +x[1]);
+      if (years4.length) { out.year = years4[years4.length - 1]; out.hasAny = true }
+      else {
+        const ym = s.match(/\bnam\s+(\d{2})\b/);
+        const only2 = s.match(/^\s*(\d{2})\s*$/);
+        const yy = ym ? +ym[1] : (only2 ? +only2[1] : null);
+        if (yy !== null) { out.year = (yy <= 30 ? 2000 + yy : 1900 + yy); out.hasAny = true }
+      }
+      out.complete = !!(out.day && out.month && out.year);
+      return out;
+    }
+    function dobMatches(raw) {
+      const d = extractDob(raw);
+      return d.day === 14 && d.month === 3 && d.year === 1978;
+    }
+    function dobDayMonthMatch(raw) { const d = extractDob(raw); return d.day === 14 && d.month === 3 }
+
+    function asksToBook(txt) { return has(txt, ['dat lich', 'dat kham', 'hen lich', 'muon kham']) }
+    function isAffirmative(txt) { return has(txt, ['vang', 'da', 'dung', 'dong y', 'xac nhan', 'chac chan', 'ok', 'oke', 'uh', 'u']) }
+    function intendsAttend(txt) {
+      const s = normalize(txt);
+      if (has(s, ['khong den duoc', 'khong toi duoc', 'khong di duoc'])) return false;
+      return has(s, ['toi se den', 'se den', 'toi den', 'van den', 'giu lich cu toi den', 'giu lich toi den', 'khong ban toi se den']);
+    }
+    function asksToCancel(txt) {
+      const s = normalize(txt);
+      if (intendsAttend(s)) return false;
+      if (has(s, ['khong ban', 'khong co viec ban'])) return false;
+      return has(s, ['huy lich', 'muon huy', 'xin huy', 'khong den duoc', 'khong toi duoc', 'khong di duoc', 'toi ban hom do', 'ban viec hom do', 'khong the den']);
+    }
+    function asksToReschedule(txt) { return has(txt, ['doi lich', 'doi gio', 'doi ngay', 'chuyen lich', 'hen lai']) }
+    function wantsStaff(txt) { return has(txt, ['gap nhan vien', 'gap tong dai vien', 'noi chuyen voi nhan vien', 'chuyen nhan vien']) }
+    function clinicalQuestion(txt) { return has(txt, ['thuoc', 'trieu chung', 'dau nguc', 'cap cuu', 'lieu dung', 'chan doan', 'tac dung phu']) }
+    function outOfScopeQuestion(txt) {
+      return has(txt, ['thoi tiet', 'gia vang', 'bong da', 'chung khoan', 'an gi hom nay', 'ke chuyen', 'tin tuc']);
+    }
+    function inferCancelReason(txt) {
+      if (has(txt, ['ban', 'khong sap xep', 'khong co thoi gian'])) return 'PATIENT_UNAVAILABLE';
+      if (has(txt, ['khong con nhu cau'])) return 'NO_LONGER_NEEDED';
+      if (has(txt, ['kham noi khac', 'da kham noi khac'])) return 'WENT_ELSEWHERE';
+      if (has(txt, ['chi phi', 'dat qua', 'khong du tien'])) return 'COST';
+      return null;
+    }
+    function extractBookingDate(raw) {
+      const s = effectiveUtterance(raw);
+      let m = s.match(/ngay\s+(\d{1,2})\s*[\/-]\s*(\d{1,2})(?:\s*[\/-]\s*(\d{2,4}))?/);
+      if (!m) m = s.match(/\b(\d{1,2})\s*[\/-]\s*(\d{1,2})(?:\s*[\/-]\s*(\d{2,4}))?\b/);
+      if (m) {
+        let y = m[3] ? +m[3] : 2026; if (y < 100) y = 2000 + y;
+        return String(+m[1]).padStart(2, '0') + '/' + String(+m[2]).padStart(2, '0') + '/' + y;
+      }
+      m = s.match(/ngay\s+(\d{1,2})\b/);
+      if (m) return String(+m[1]).padStart(2, '0') + '/09/2026';
+      return null;
+    }
+    function extractHour(raw) {
+      const s = effectiveUtterance(raw); let m = s.match(/\b(\d{1,2})\s*(?:h|gio)\b/); return m ? +m[1] : null;
+    }
+    function extractSession(raw) {
+      const s = effectiveUtterance(raw);
+      if (has(s, ['buoi chieu', 'chieu'])) return 'chiều';
+      if (has(s, ['buoi sang', 'sang'])) return 'sáng';
+      const h = extractHour(s); if (h !== null) return h < 12 ? 'sáng' : 'chiều';
+      return null;
+    }
+
+    function choose(id) {
+      selected = scenarios.find(s => s.id === id);
+      document.querySelectorAll('.scenarios button').forEach(b => b.classList.toggle('active', b.dataset.id === id));
+      resetUI();
+    }
+    function resetUI() {
+      clearInterval(timerInt);
+      seconds = 0; verified = false; misunderstand = 0; silence = 0; pendingSlot = null; cancelReason = null;
+      capturedName = ''; capturedDob = ''; identityRetry = false; identityDobMisses = 0; pendingIntent = null;
+      bookingNeed = { specialty: '', date: '', session: '', hour: null };
+      appointment.status = 'SCHEDULED'; appointment.attempt_count = 0; stage = 'ID_NAME'; callActive = false;
+      $('timer').textContent = '00:00';
+      $('transcript').innerHTML = '<div class="bubble system">Nhấn “Bắt đầu”.</div>';
+      $('apiLog').textContent = 'Chưa có action.';
+      $('scenarioName').textContent = selected.name; $('direction').textContent = selected.dir;
+      $('identity').textContent = 'NOT_VERIFIED'; $('apptStatus').textContent = 'SCHEDULED';
+      $('attempt').textContent = '0'; $('outcome').textContent = '—'; $('callStatus').textContent = 'Chưa bắt đầu'; showFloatingStatus('');
+      $('appointmentId').textContent = selected.dir === 'inbound' ? 'null' : appointment.id;
+      $('bookEdge').style.display = (selected.id === 'book' || selected.id === 'transfer') ? 'block' : 'none';
+      if (!['book', 'transfer'].includes(selected.id)) $('patientNotFound').checked = false;
+      $('startBtn').style.display = 'block'; $('startBtn').textContent = 'Bắt đầu';
+      $('input').style.display = 'none'; $('sendBtn').style.display = 'none';
+      setState(selected.id === 'unreachable' ? 'START' : 'AWAITING_IDENTITY');
+      setQuick([]);
+    }
+    function start() {
+      resetUI();
+      callActive = true; $('callStatus').textContent = 'Đang trong cuộc gọi'; showFloatingStatus('');
+      $('startBtn').style.display = 'none'; $('input').style.display = 'block'; $('sendBtn').style.display = 'block';
+      timerInt = setInterval(tick, 1000);
+      api('SESSION_START scenario=' + selected.id + ' direction=' + selected.dir);
+      api('VOICE_CONFIG tts_speaking_rate=1.08 target_response_latency<700ms');
+
+      if (selected.id === 'unreachable') {
+        stage = 'NO_ANSWER'; setState('START');
+        add('Đang gọi bệnh nhân...', 'system');
+        setQuick([['Không trả lời', 'NO_ANSWER'], ['Chuyển vào hộp thư thoại', 'VOICEMAIL'], ['Bệnh nhân bắt máy nhưng im lặng', 'SILENCE']]);
+        return;
+      }
+
+      if (selected.dir === 'inbound') {
+        api('caller_number = ' + patient.phone);
+        api('GET /patients?phone=' + patient.phone + ' → lookup candidates (phone is NOT identity proof)');
+        if ($('patientNotFound').checked) {
+          api('→ no matching patient');
+          add('Xin chào, đây là tổng đài Vinmec. Em chưa tìm thấy hồ sơ bệnh nhân phù hợp với số điện thoại này. Em xin phép chuyển anh/chị tới nhân viên hỗ trợ.');
+          end('TRANSFERRED', 'TRANSFERRED', 'transfer_reason = PATIENT_NOT_FOUND'); return;
+        }
+        api('→ patient found: pt_3391 (lookup only, NOT identity proof)');
+      } else {
+        api('GET /identity-candidates?appointment_id=' + appointment.id + ' → lookup candidates (appointment_id is NOT identity proof)');
+        if ($('patientNotFound').checked) {
+          api('→ no matching patient');
+          add('Em chưa tìm thấy hồ sơ bệnh nhân phù hợp với mã lịch này. Em xin phép chuyển anh/chị tới nhân viên hỗ trợ.');
+          end('TRANSFERRED', 'TRANSFERRED', 'transfer_reason = PATIENT_NOT_FOUND'); return;
+        }
+        api('→ candidate found: pt_3391 (lookup only, NOT identity proof)');
+      }
+      add('Xin chào, đây là tổng đài Vinmec. Cho em hỏi em đang nói chuyện với anh/chị nào ạ?');
+      stage = 'ID_NAME';
+      setQuick([['Tôi là Nguyễn Văn An nhé', 'Nguyễn Văn An nhé'], ['Tôi muốn đặt lịch, tôi là Nguyễn Văn An', 'Tôi muốn đặt lịch, tôi là Nguyễn Văn An'], ['Tôi là Trần Văn B', 'Trần Văn B']]);
+    }
+
+    function identitySuccess() {
+      verified = true; $('identity').textContent = 'VERIFIED'; api('IDENTITY_VERIFIED patient_id=pt_3391');
+      if (selected.dir === 'outbound') api('GET /appointments/' + appointment.id + ' → read AFTER identity verified');
+
+      if (selected.id === 'identity') {
+        setState('AWAITING_INTENT'); add('Cảm ơn anh/chị. Em đã xác minh thông tin thành công.');
+        $('outcome').textContent = 'IDENTITY VERIFIED'; $('callStatus').textContent = 'Đã qua bước xác minh'; showFloatingStatus(''); setQuick([]); return true;
+      }
+      if (selected.id === 'book') {
+        if (pendingIntent === 'BOOK') {
+          setState('COLLECTING_BOOKING_NEED'); stage = 'BOOK_SPECIALTY';
+          add('Cảm ơn anh/chị. Em đã ghi nhận nhu cầu đặt lịch. Anh/chị muốn đặt khám chuyên khoa nào ạ?');
+          setQuick([['Nội tổng quát', 'Nội tổng quát'], ['Tim mạch', 'Tim mạch']]);
+        } else {
+          setState('AWAITING_INTENT'); stage = 'BOOK_INTENT'; add('Cảm ơn anh/chị. Anh/chị cần hỗ trợ gì ạ?');
+          setQuick([['Tôi muốn đặt lịch khám', 'Tôi muốn đặt lịch khám'], ['Tôi muốn hỏi việc khác', 'Hôm nay thời tiết thế nào?']]);
+        }
+        return true;
+      }
+
+      setState('AWAITING_INTENT'); stage = 'INTENT';
+      if (selected.id === 'confirm') {
+        add('Anh/chị có lịch khám tại ' + appointment.clinic + ' vào ' + appointment.dateText + ' lúc ' + appointment.timeText + '. Anh/chị xác nhận sẽ đến khám, hủy hay muốn đổi lịch ạ?');
+        setQuick([['Tôi sẽ đến', 'Tôi sẽ đến'], ['Tôi không đến được', 'Tôi không đến được'], ['Tôi muốn đổi lịch', 'Tôi muốn đổi lịch']]);
+      } else {
+        add('Anh/chị có lịch khám tại ' + appointment.clinic + ' vào ' + appointment.dateText + ' lúc ' + appointment.timeText + '. Anh/chị cần hỗ trợ gì với lịch này ạ?');
+        if (selected.id === 'cancel') setQuick([['Tôi muốn hủy lịch', 'Tôi muốn hủy lịch'], ['Tôi không đến được', 'Tôi không đến được']]);
+        if (selected.id === 'reschedule') setQuick([['Tôi muốn đổi lịch', 'Tôi muốn đổi lịch'], ['Tôi không rõ', 'Tôi không rõ']]);
+        if (selected.id === 'transfer') setQuick([['Tôi muốn hỏi về thuốc', 'Tôi muốn hỏi về thuốc'], ['Cho tôi gặp nhân viên', 'Cho tôi gặp nhân viên'], ['Hôm nay thời tiết thế nào?', 'Hôm nay thời tiết thế nào?'], ['Bot không hiểu yêu cầu', 'Tôi không rõ'], ['Mô phỏng lỗi hệ thống', 'SYSTEM_ERROR']]);
+      }
+      return true;
+    }
+
+    function identityFailed() {
+      add('Em đã ghi nhận yêu cầu, nhân viên bệnh viện sẽ liên hệ lại với anh/chị sớm nhất có thể ạ. Em cảm ơn anh/chị ạ. Chúc anh/chị sức khỏe ạ.', 'error');
+      end('TRANSFERRED', 'TRANSFERRED', selected.dir === 'outbound'
+        ? 'POST /appointments/' + appointment.id + '/transfer {reason: IDENTITY_FAILED} [Idempotency-Key]'
+        : 'transfer_reason = IDENTITY_FAILED');
+    }
+    function identityFlow(txt) {
+      // Cuộc gọi đến: ghi nhớ intent đặt lịch ngay cả khi người gọi nói trước bước xác minh.
+      if (selected.id === 'book' && asksToBook(txt)) { pendingIntent = 'BOOK'; api('INTENT_BUFFERED intent=BOOK before identity'); }
+
+      if (stage === 'ID_NAME') {
+        add(txt, 'patient'); capturedName = txt;
+        // Có intent nhưng chưa có tên: ghi nhớ intent và chỉ hỏi xác minh, không coi là sai tên.
+        if (selected.id === 'book' && pendingIntent === 'BOOK' && !nameMatches(txt) && !has(txt, [patient.full_name])) {
+          add('Dạ, em đã ghi nhận nhu cầu đặt lịch. Trước khi thực hiện, anh/chị vui lòng cho em biết đầy đủ họ tên theo hồ sơ ạ.');
+          setQuick([['Nguyễn Văn An ạ', 'Nguyễn Văn An ạ']]); return true;
+        }
+        if (!nameMatches(capturedName)) {
+          identityRetry = true; stage = 'ID_OPEN_RETRY'; setState('AWAITING_IDENTITY');
+          add('Dạ, anh/chị cho em xin ngày tháng năm sinh để xác minh thông tin ạ.', 'error');
+          setQuick([['Nguyễn Văn An nhé, sinh ngày 14/03/1978', 'Nguyễn Văn An nhé, sinh ngày 14/03/1978'], ['Trần Văn B, sinh năm 1990', 'Trần Văn B, sinh năm 1990']]);
+          return true;
+        }
+        stage = 'ID_DOB'; identityDobMisses = 0;
+        add('Dạ, anh/chị cho em xin ngày tháng năm sinh để xác minh thông tin ạ.');
+        setQuick([['14/03, chưa nhớ năm', '14/03'], ['Tôi sinh năm 1987, à nhầm 1978; ngày 14/03', 'Tôi sinh năm 1987, à nhầm 1978; ngày 14/03'], ['Ngày 14 tháng 3 năm 1978', '14/03/1978']]);
+        return true;
+      }
+
+      if (stage === 'ID_DOB') {
+        add(txt, 'patient'); capturedDob = txt;
+        const d = extractDob(txt);
+        if (dobMatches(txt)) return identitySuccess();
+        if (d.day === 14 && d.month === 3 && !d.year) {
+          stage = 'ID_DOB_YEAR'; add('Em đã nhận được ngày 14 tháng 3. Anh/chị cho em xin thêm năm sinh ạ.');
+          setQuick([['Năm 1978', '1978'], ['Năm 1987, à nhầm 1978', '1987, à nhầm 1978']]); return true;
+        }
+        if (d.year === 1978 && (!d.day || !d.month)) {
+          stage = 'ID_DOB_DAY_MONTH'; add('Em đã nhận được năm sinh 1978. Anh/chị cho em xin thêm ngày và tháng sinh ạ.');
+          setQuick([['Ngày 14 tháng 3', '14/03'], ['Ngày 1 tháng 1', '01/01']]); return true;
+        }
+        if (!d.hasAny) {
+          identityDobMisses++;
+          if (identityDobMisses >= 2) { identityFailed(); return true }
+          add('Em chưa nhận được ngày sinh. Anh/chị vui lòng đọc ngày, tháng và năm sinh; ví dụ 14/03/1978 ạ.', 'error');
+          return true;
+        }
+        identityFailed(); return true;
+      }
+
+      if (stage === 'ID_DOB_YEAR') {
+        add(txt, 'patient'); const d = extractDob(txt);
+        if (d.year === 1978) { capturedDob = '14/03/1978'; return identitySuccess() }
+        if (!d.year) { identityDobMisses++; if (identityDobMisses >= 2) { identityFailed(); return true }; add('Em vẫn chưa nhận được năm sinh. Anh/chị vui lòng chỉ đọc năm sinh ạ.'); return true }
+        identityFailed(); return true;
+      }
+
+      if (stage === 'ID_DOB_DAY_MONTH') {
+        add(txt, 'patient'); const d = extractDob(txt);
+        if (d.day === 14 && d.month === 3) { capturedDob = '14/03/1978'; return identitySuccess() }
+        identityFailed(); return true;
+      }
+
+      if (stage === 'ID_OPEN_RETRY') {
+        add(txt, 'patient');
+        const hasName = nameMatches(txt), d = extractDob(txt);
+        if (hasName && d.day === 14 && d.month === 3 && d.year === 1978) { capturedName = patient.full_name; capturedDob = patient.dob; return identitySuccess() }
+        if (hasName && d.day === 14 && d.month === 3 && !d.year) { stage = 'ID_DOB_YEAR'; add('Em đã nhận đúng họ tên và ngày 14 tháng 3. Anh/chị cho em xin thêm năm sinh ạ.'); return true }
+        // Chỉ cho 1 lần hỏi mở; vẫn sai/thiếu tên thì IDENTITY_FAILED.
+        identityFailed(); return true;
+      }
+      return false;
+    }
+
+    function beginCancel(txt) {
+      stage = 'CANCEL_CONFIRM'; setState('AWAITING_CONFIRMATION');
+      add('Để xác nhận lại, anh/chị có chắc chắn muốn hủy lịch khám này không ạ?');
+      setQuick([['Vâng, tôi bận việc hôm đó', 'Vâng, tôi bận việc hôm đó'], ['Có, tôi xác nhận hủy', 'Có, tôi xác nhận hủy'], ['Không, tôi vẫn sẽ đến', 'Không, tôi vẫn sẽ đến']]);
+    }
+    function beginReschedule() {
+      stage = 'RESLOT'; setState('OFFERING_SLOTS');
+      api('GET /slots?priority=same_doctor_or_specialty&clinic_id=cl_vinmec → ' + slots.map(s => s.id).join(', '));
+      const choices = slots.map((s, i) => `${i + 1}) ${s.label}`).join('; ');
+      add('Em ưu tiên lịch cùng bác sĩ hoặc cùng chuyên khoa. Hiện còn tối đa ba lựa chọn: ' + choices + '. Anh/chị muốn chọn khung giờ nào ạ?');
+      setQuick(slots.map(s => ['Tôi chọn ' + s.label, s.id]));
+    }
+    function confirmExisting() {
+      api('POST /appointments/' + appointment.id + '/confirm [Idempotency-Key; If-Match:' + appointment.version + ']');
+      add('Dạ, em đã ghi nhận anh/chị sẽ đến khám theo lịch hiện tại.'); end('CONFIRMED', 'CONFIRMED');
+    }
+
+    function handle(txt) {
+      if (!callActive) return;
+
+      if (stage === 'NO_ANSWER') {
+        if (txt === 'NO_ANSWER') txt = 'SILENCE';
+        if (txt === 'VOICEMAIL') { appointment.attempt_count++; $('attempt').textContent = appointment.attempt_count; add('Cuộc gọi chuyển vào hộp thư thoại. Không để lại chi tiết lịch hẹn.', 'system'); api('Outcome UNREACHABLE; attempt_count + 1'); end('UNREACHABLE', 'UNREACHABLE'); return }
+        if (txt === 'SILENCE') {
+          add('...', 'patient'); silence++;
+          if (silence >= 3) { appointment.attempt_count++; $('attempt').textContent = appointment.attempt_count; add('Em chưa nhận được phản hồi. Vinmec sẽ liên hệ lại với anh/chị sau ạ.'); api('3 consecutive silent turns → UNREACHABLE; attempt_count + 1'); end('UNREACHABLE', 'UNREACHABLE') }
+          else { add(silence === 1 ? 'Anh/chị có nghe rõ em không ạ?' : 'Anh/chị vui lòng phản hồi nếu đang nghe máy ạ.'); setQuick([['Tiếp tục im lặng', 'SILENCE'], ['Tôi nghe đây', 'ANSWER']]) }
+          return;
+        }
+        if (txt === 'ANSWER') { silence = 0; setState('AWAITING_IDENTITY'); stage = 'ID_NAME'; add('Xin chào, đây là tổng đài Vinmec. Cho em hỏi em đang nói chuyện với anh/chị nào ạ?'); setQuick([['Nguyễn Văn An nhé', 'Nguyễn Văn An nhé']]); return }
+      }
+
+      if (identityFlow(txt)) return;
+      add(txt, 'patient');
+
+      if (stage === 'INTENT') {
+        // Cancellation must be checked before affirmative attendance because “không đến được” contains “đến”.
+        if (asksToCancel(txt)) { beginCancel(txt); return }
+        if (asksToReschedule(txt)) { beginReschedule(); return }
+        if (intendsAttend(txt)) { confirmExisting(); return }
+        if (txt === 'SYSTEM_ERROR' || txt === 'NO_VALID_APPOINTMENT') {
+          const reason = txt === 'SYSTEM_ERROR' ? 'SYSTEM_ERROR' : 'NO_VALID_APPOINTMENT';
+          add(reason === 'SYSTEM_ERROR' ? 'Hệ thống đang gặp lỗi. Em xin phép chuyển anh/chị tới nhân viên hỗ trợ.' : 'Hiện không còn lịch hợp lệ. Em xin phép chuyển anh/chị tới nhân viên hỗ trợ.');
+          end('TRANSFERRED', 'TRANSFERRED', 'POST /appointments/' + appointment.id + '/transfer {reason: ' + reason + '} [Idempotency-Key]'); return;
+        }
+        if (clinicalQuestion(txt)) { add('Nội dung này cần nhân viên y tế hỗ trợ trực tiếp. Em xin phép chuyển anh/chị tới nhân viên hỗ trợ.'); end('TRANSFERRED', 'TRANSFERRED', 'POST /appointments/' + appointment.id + '/transfer {reason: CLINICAL_QUESTION} [Idempotency-Key]'); return }
+        if (wantsStaff(txt)) { add('Dạ, em xin phép chuyển anh/chị tới nhân viên hỗ trợ.'); end('TRANSFERRED', 'TRANSFERRED', 'POST /appointments/' + appointment.id + '/transfer {reason: PATIENT_REQUEST} [Idempotency-Key]'); return }
+        if (outOfScopeQuestion(txt)) { add('Nội dung này nằm ngoài phạm vi hỗ trợ của callbot. Em xin phép chuyển anh/chị tới nhân viên hỗ trợ.'); end('TRANSFERRED', 'TRANSFERRED', 'POST /appointments/' + appointment.id + '/transfer {reason: OUT_OF_SCOPE} [Idempotency-Key]'); return }
+        misunderstand++;
+        if (misunderstand >= 2) { add('Em vẫn chưa hiểu chính xác yêu cầu. Em xin phép chuyển anh/chị tới nhân viên hỗ trợ.'); end('TRANSFERRED', 'TRANSFERRED', 'POST /appointments/' + appointment.id + '/transfer {reason: NOT_UNDERSTOOD} [Idempotency-Key]') }
+        else { add('Em chưa hiểu rõ. Anh/chị vui lòng nói lại yêu cầu một lần nữa ạ.'); setQuick([['Tôi vẫn không rõ', 'Tôi vẫn không rõ'], ['Cho tôi gặp nhân viên', 'Cho tôi gặp nhân viên']]) }
+        return;
+      }
+
+      if (stage === 'CANCEL_CONFIRM') {
+        // “Không, tôi vẫn sẽ đến” means keep/confirm appointment, not cancel.
+        if (intendsAttend(txt)) { confirmExisting(); return }
+        if (isAffirmative(txt)) {
+          const inferred = inferCancelReason(txt);
+          if (inferred) {
+            cancelReason = inferred; api('POST /appointments/' + appointment.id + '/cancel {cancel_reason:' + cancelReason + '} [Idempotency-Key; If-Match:' + appointment.version + ']');
+            add('Dạ, em đã ghi nhận hủy lịch và lý do của anh/chị.'); end('CANCELLED', 'CANCELLED'); return;
+          }
+          stage = 'CANCEL_REASON'; add('Anh/chị cho em xin lý do hủy: không sắp xếp được thời gian, không còn nhu cầu, đã khám nơi khác, chi phí, hay lý do khác ạ?');
+          setQuick([['Tôi không sắp xếp được thời gian', 'PATIENT_UNAVAILABLE'], ['Tôi không còn nhu cầu', 'NO_LONGER_NEEDED'], ['Tôi đã khám nơi khác', 'WENT_ELSEWHERE'], ['Do chi phí', 'COST'], ['Lý do khác', 'UNSPECIFIED']]);
+        } else { add('Dạ, em giữ nguyên lịch khám hiện tại.'); end('SCHEDULED', 'SCHEDULED', 'No write') }
+        return;
+      }
+      if (stage === 'CANCEL_REASON') {
+        cancelReason = ['PATIENT_UNAVAILABLE', 'NO_LONGER_NEEDED', 'WENT_ELSEWHERE', 'COST', 'UNSPECIFIED'].includes(txt) ? txt : (inferCancelReason(txt) || 'UNSPECIFIED');
+        api('POST /appointments/' + appointment.id + '/cancel {cancel_reason:' + cancelReason + '} [Idempotency-Key; If-Match:' + appointment.version + ']');
+        add('Dạ, em đã ghi nhận hủy lịch khám của anh/chị.'); end('CANCELLED', 'CANCELLED'); return;
+      }
+
+      if (stage === 'RESLOT') {
+        const s = slots.find(x => x.id === txt);
+        if (!s) {
+          // Cho phép nói tự nhiên “9h ngày 30”, “9h ngày 30/09”, “buổi chiều ngày 30”.
+          const date = extractBookingDate(txt), hour = extractHour(txt), session = extractSession(txt);
+          const candidate = slots.find(x => (!date || x.date === date) && (hour === null || x.hour === hour) && (!session || x.session === session));
+          if (candidate) { pendingSlot = candidate; stage = 'RES_CONFIRM'; setState('AWAITING_CONFIRMATION'); add('Anh/chị xác nhận đổi lịch sang ' + candidate.label + ' đúng không ạ?'); setQuick([['Đúng, tôi xác nhận', 'Đúng, tôi xác nhận'], ['Giữ lịch cũ, tôi đến', 'Giữ lịch cũ, tôi đến']]); return }
+          add('Em chưa xác định được khung giờ phù hợp. Anh/chị vui lòng chọn một trong ba khung giờ em vừa cung cấp ạ.', 'error'); return;
+        }
+        pendingSlot = s; stage = 'RES_CONFIRM'; setState('AWAITING_CONFIRMATION'); add('Anh/chị xác nhận đổi lịch sang ' + s.label + ' đúng không ạ?'); setQuick([['Đúng, tôi xác nhận', 'Đúng, tôi xác nhận'], ['Giữ lịch cũ, tôi đến', 'Giữ lịch cũ, tôi đến']]); return;
+      }
+      if (stage === 'RES_CONFIRM') {
+        if (intendsAttend(txt) || has(txt, ['giu lich cu', 'giu lich'])) { confirmExisting(); return }
+        if (isAffirmative(txt)) { api('POST /appointments/' + appointment.id + '/reschedule {new_slot_id:' + pendingSlot.id + '} [Idempotency-Key; If-Match:' + appointment.version + '] → release old slot atomically'); add('Dạ, em đã đổi lịch khám của anh/chị sang ' + pendingSlot.label + '.'); end('RESCHEDULED', 'RESCHEDULED') }
+        else { add('Dạ, em giữ nguyên lịch khám hiện tại.'); end('SCHEDULED', 'SCHEDULED', 'No write') }
+        return;
+      }
+
+      if (stage === 'BOOK_INTENT') {
+        if (asksToBook(txt)) { pendingIntent = 'BOOK'; stage = 'BOOK_SPECIALTY'; setState('COLLECTING_BOOKING_NEED'); add('Dạ, anh/chị muốn đặt khám chuyên khoa nào ạ?'); setQuick([['Nội tổng quát', 'Nội tổng quát'], ['Tim mạch', 'Tim mạch']]); return }
+        if (outOfScopeQuestion(txt)) { add('Yêu cầu này nằm ngoài phạm vi đặt lịch. Em xin phép chuyển anh/chị tới nhân viên hỗ trợ.'); end('TRANSFERRED', 'TRANSFERRED', 'transfer_reason = OUT_OF_SCOPE'); return }
+        add('Yêu cầu này không thuộc luồng đặt lịch. Em xin phép chuyển anh/chị tới nhân viên hỗ trợ.'); end('TRANSFERRED', 'TRANSFERRED', 'transfer_reason = OUT_OF_SCOPE'); return;
+      }
+      if (stage === 'BOOK_SPECIALTY') {
+        bookingNeed.specialty = txt; stage = 'BOOK_DATE'; add('Anh/chị muốn khám vào ngày nào ạ?');
+        setQuick([['9 giờ ngày 30', '9 giờ ngày 30'], ['9h ngày 30/09', '9h ngày 30/09'], ['Buổi chiều ngày 30', 'buổi chiều ngày 30']]); return;
+      }
+      if (stage === 'BOOK_DATE') {
+        const date = extractBookingDate(txt), hour = extractHour(txt), session = extractSession(txt);
+        if (!date) { add('Em chưa nhận được ngày khám. Anh/chị vui lòng nói ngày, ví dụ “ngày 30” hoặc “ngày 30/09” ạ.'); return }
+        bookingNeed.date = date; bookingNeed.hour = hour; bookingNeed.session = session || '';
+        api('BOOKING_PARSE raw="' + txt + '" → date=' + date + (hour !== null ? ' hour=' + hour : '') + (session ? ' session=' + session : ''));
+        if (session || hour !== null) {
+          stage = 'BOOK_SLOT'; setState('OFFERING_SLOTS');
+          const filtered = slots.filter(s => s.date === date && (hour === null || s.hour === hour) && (!session || s.session === session));
+          const offered = (filtered.length ? filtered : slots.filter(s => s.date === date)).slice(0, 3);
+          api('GET /slots?specialty=' + bookingNeed.specialty + '&date=' + date + (session ? '&session=' + session : '') + (hour !== null ? '&hour=' + hour : '') + ' → ' + offered.map(s => s.id).join(', '));
+          add('Em đã hiểu ngày khám là ' + date + (hour !== null ? ', lúc ' + hour + ' giờ' : '') + (session ? ', buổi ' + session : '') + '. Các khung giờ phù hợp: ' + offered.map((s, i) => `${i + 1}) ${s.label}`).join('; ') + '. Anh/chị chọn khung giờ nào ạ?');
+          setQuick(offered.map(s => ['Tôi chọn ' + s.label, s.id])); return;
+        }
+        stage = 'BOOK_SESSION'; add('Anh/chị muốn khám buổi sáng hay buổi chiều ạ?'); setQuick([['Buổi sáng', 'sáng'], ['Buổi chiều', 'chiều'], ['Buổi nào cũng được', 'linh hoạt']]); return;
+      }
+      if (stage === 'BOOK_SESSION') {
+        bookingNeed.session = extractSession(txt) || txt; stage = 'BOOK_SLOT'; setState('OFFERING_SLOTS');
+        const offered = slots.filter(s => s.date === bookingNeed.date && (bookingNeed.session === 'linh hoạt' || s.session === bookingNeed.session)).slice(0, 3);
+        api('GET /slots?specialty=' + bookingNeed.specialty + '&date=' + bookingNeed.date + '&session=' + bookingNeed.session + ' → ' + offered.map(s => s.id).join(', '));
+        add('Hiện có tối đa ba khung giờ phù hợp: ' + offered.map((s, i) => `${i + 1}) ${s.label}`).join('; ') + '. Anh/chị muốn chọn khung giờ nào ạ?'); setQuick(offered.map(s => ['Tôi chọn ' + s.label, s.id])); return;
+      }
+      if (stage === 'BOOK_SLOT') {
+        const s = slots.find(x => x.id === txt);
+        if (!s) { add('Khung giờ đó hiện không nằm trong danh sách còn trống. Anh/chị vui lòng chọn một khung giờ em vừa cung cấp ạ.'); return }
+        pendingSlot = s; stage = 'BOOK_CONFIRM'; setState('AWAITING_CONFIRMATION'); add('Anh/chị xác nhận đặt lịch ' + s.label + ' đúng không ạ?'); setQuick([['Đúng, tôi xác nhận', 'Đúng, tôi xác nhận'], ['Không, tôi chưa đặt', 'Không']]); return;
+      }
+      if (stage === 'BOOK_CONFIRM') {
+        if (isAffirmative(txt)) { api('POST /appointments {slot_id:' + pendingSlot.id + ', patient_id:pt_3391} [Idempotency-Key] → exactly one appointment; slot occupied'); add('Dạ, em đã đặt lịch thành công cho anh/chị vào ' + pendingSlot.label + '.'); end('BOOKED', 'BOOKED') }
+        else { add('Dạ, em chưa tạo lịch mới.'); end('SCHEDULED', 'SCHEDULED', 'No write') }
+        return;
+      }
+    }
+
+    scenarios.forEach(s => { const b = document.createElement('button'); b.dataset.id = s.id; b.textContent = s.name; b.onclick = () => choose(s.id); $('scenarioButtons').appendChild(b) });
+    choose('confirm');
+    $('startBtn').onclick = start;
+    $('sendBtn').onclick = () => { const v = $('input').value.trim(); if (!v) return; $('input').value = ''; handle(v) };
+    $('input').addEventListener('keydown', e => { if (e.key === 'Enter') $('sendBtn').click() });
+    $('apiToggle').onclick = () => { const log = $('apiLog'); const show = log.style.display === 'none'; log.style.display = show ? 'block' : 'none'; $('apiChevron').textContent = show ? '▾' : '▸' };
+  </script>
+</body>
+
+</html>
