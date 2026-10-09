@@ -4,12 +4,12 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/Prototype_updated_v4.html"
+      "destination": "/Prototype_updated_v4"
     }
   ],
   "headers": [
     {
-      "source": "/Prototype_updated_v4.html",
+      "source": "/Prototype_updated_v4",
       "headers": [
         {
           "key": "Cache-Control",
